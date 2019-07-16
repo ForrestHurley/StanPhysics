@@ -26,6 +26,11 @@ abstract: Bayesian statistics is closely coupled with physics. The metropolis al
   to identify the locations of phase transitions in macroscopic properties. Our work
   shows the applicability of Stan for computation in continuous statistical mechanical
   problems.
+header-includes: |
+  \usepackage{float}
+  \makeatletter
+  \def\fps@figure{H}
+  \makeatother
 ---
 
 ```{r setup, include=FALSE}
@@ -118,16 +123,13 @@ $\hat{R}$ should be between 0.9 and 1.1 if chains have converged properly. In al
 
 \subsection{Effective Sample Size}
 
-\begin{figure}
-\includegraphics[width=3in]{Images/vorticity_example.png}
-\caption{\label{fig:vort_example}An example configuration of spins on a lattice square. Because the shortest angles between each spin sum to $-2\pi$, it is an anti-vortex.}
-\end{figure}
-
 Simulating 4 independent chains also allows us to calculate the effective sample size of our simulation. As the samples from the chains are correlated, effective sample size is the equivalent number of independent samples for estimates of posterior parameters. If $\rho_t$ is the autocorrelation of the Markov chain with lag $t$ then the effective sample size is
 $$N_{eff}=\frac{N}{\sum_{t=-\infty}^{\infty}\rho_t}=\frac{N}{1+2\sum_{t=1}^{\infty}\rho_t}$$
 Using the same chain for calculating mean and variance (required for autocorrelation) as for calculating the autocorrelations leads to a biased estimate.
 
 \subsection{Vorticity}
+
+![\label{fig:vort_example}An example configuration of spins on a lattice square. Because the shortest angles between each spin sum to $-2\pi$, it is an anti-vortex.](Images/vorticity_example.png){width=3in}
 
 The KT transition arises from an appearance of large vortices. We identify vortices by looking for lattice cells where the corner spin vectors tend to point clockwise or counterclockwise. Specifically we calculate the shortest difference in angles in the counterclockwise direction and sum. In Figure \ref{fig:vort_example}, the angle between vectors A and B would be -45 degrees. This sum can either be $2\pi$, $0$, or $-2\pi$ (technically it can also be $4\pi$ and $-4\pi$ but those cases are exceedingly unlikely). On a lattice with periodic boundary conditions, there will be the same number of vortices ($2\pi$) and anti-vortices ($-2\pi$)[@Imriska2009]. We generally calculate the density of vortices on 100 random samples from spin configurations at each temperature.
 
@@ -242,32 +244,17 @@ sprintf("Energy: %f Specific Heat: %f Vortex Density: %f",
 
 We found that the energy vs temperature curves had converged by N=8. Figure \ref{fig:energy} indicates that the energy of the system increases fairly linearly with temperature before the KT transition. Figure \ref{fig:heat} shows the specific heat of the various lattice sizes and temperatures. It starts around $c=0.5$ at a temperature of 0. There is no extreme discontinuity of the specific heat for any lattice size up to N=24. The peak specific heat occurs around a temperature of 1.1. While vortices start appearing in large numbers around a temperature of 0.9, Figure \ref{fig:vort} does not show any particularly noticeable characteristics around the peak specific heat. The initial rate of vortex pair splitting and vortex density increase does not differ between any of the lattice sizes. The density of vortices is perfectly linearly related to the density of energy in the system. As seen in Figure \ref{fig:energy_vort}, once the energy is greater than about -1.5, the vortex density for all of the lattice sizes lie on a line with slope approximately 0.1.
 
-\begin{figure}[htb]
-\includegraphics[width=3.25in]{Images/plot_pos_energ.png}
-\caption{\label{fig:energy}Mean energy of a canonical ensemble of states of the XY Model at several temperatures}
-\end{figure}
+![\label{fig:energy}Mean energy of a canonical ensemble of states of the XY Model at several temperatures](Images/plot_pos_energ.png){width=3.25in}
 
-\begin{figure}[htb]
-\includegraphics[width=3.25in]{Images/plot_pos_heat.png}
-\caption{\label{fig:heat}The specific heat of the XY models across temperatures and lattice sizes. The 24x24 lattice only has data points up to a temperature of 1.5.}
-\end{figure}
+![\label{fig:heat}The specific heat of the XY models across temperatures and lattice sizes. The 24x24 lattice only has data points up to a temperature of 1.5.](Images/plot_pos_heat.png){width=3in}
 
-\begin{figure}[htb]
-\includegraphics[width=3.25in]{Images/plot_pos_vort.png}
-\caption{\label{fig:vort}The density of vortices at various temperatures. Below 0.8 it is almost exactly 0.}
-\end{figure}
+![\label{fig:vort}The density of vortices at various temperatures. Below 0.8 it is almost exactly 0.](Images/plot_pos_vort.png){width=3in}
 
-\begin{figure}[htb]
-\includegraphics[width=3in]{Images/plot_pos_en_vort.png}
-\caption{\label{fig:energy_vort}The relationship between energy per spin and vortices per spin for several lattice sizes.}
-\end{figure}
+![\label{fig:energy_vort}The relationship between energy per spin and vortices per spin for several lattice sizes.](Images/plot_pos_en_vort.png){width=3.25in}
 
 \subsection{J=-1}
 
-\begin{figure}[htb]
-\includegraphics[width=3in]{Images/plot_nega_diff.png}
-\caption{\label{fig:diff}The difference in mean energy between chains generated with J=1 and J=-1 at several temperatures and lattice sizes.}
-\end{figure}
+![\label{fig:diff}The difference in mean energy between chains generated with J=1 and J=-1 at several temperatures and lattice sizes.](Images/plot_nega_diff.png){width=3.25in}
 
 Many of our early experiments were run with $J=-1$. This may not have been intentional. However, we found that the energy curves of the XY Model with $J=1$ are identical to those with $J=-1$. Figure \ref{fig:diff} shows the difference between the mean energy for chains on the same lattice at the same temperature for the two different values of $J$. As temperature increases the differences also increase, but the mean difference remains close to zero for all lattice sizes. The lowest energy states for $J=-1$ are the highest energy states for $J=1$. Flipping half of the spins in a checker pattern by 180 degrees transforms directly between low energy states for the two coupling coefficients.
 
