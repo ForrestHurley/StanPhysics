@@ -29,8 +29,6 @@ abstract: Bayesian statistics is closely coupled with physics. The metropolis al
 ---
 
 ```{r setup, include=FALSE}
-library(reticulate)
-use_python("/usr/bin/python3")
 library("rstan")
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
@@ -154,41 +152,6 @@ model {
 }
 ```
 
-```{python py-setup,include=FALSE}
-import numpy as np
-import statistics
-```
-
-```{python}
-#calculate vorticity given a single set of spins
-def vorticity_calc(spin_array):
-    rolled = [spin_array,
-            np.roll(spin_array,1,0),
-            np.roll(spin_array,1,(0,1)),
-            np.roll(spin_array,1,1)]
-
-    #calculate the dot product for the shortest angle
-    dotted = []
-    for i in range(len(rolled)):
-        dotted.append(np.sum(np.multiply(rolled[i-1],rolled[i]),axis=-1))
-
-    #calculate the cross product for the direction of the shortest angle
-    crossed = []
-    for i in range(len(rolled)):
-        crossed.append(np.cross(rolled[i-1],rolled[i],axis=-1))
-
-    angles = [np.arccos(dot) * np.sign(cross) for dot, cross in zip(dotted,crossed)]
-
-    #sum the angles around each lattice square
-    around_angle = np.sum(angles,axis=0)
-
-    #find vortices
-    vortex = np.where(around_angle>1,1,0)
-
-    #count the number of vortices
-    return np.sum(vortex,axis=(-1,-2))
-```
-
 ## Results
 
 ```{r,cache=TRUE}
@@ -231,23 +194,33 @@ crossvec <- function(x,y){
  return(invisible(cv))
 }
 
+get_coordinates <- function(x,y,dir,spin_dim) {
+  dir_x <- ((0 < dir) && (dir < 3)) + spin_dim[1]
+  dir_y <- (dir > 1) + spin_dim[2]
+  
+  x_idx <- ( (x + dir_x - 1) %% spin_dim[1] ) + 1;
+  y_idx <- ( (y + dir_y - 1) %% spin_dim[2] ) + 1;
+
+  return(c(x_idx, y_idx))
+}
+
 vorticity_calc <- function(spin_array) {
   spin_dim = dim(spin_array)[1:2]
   angles = array(0,c(4,spin_dim))
-  for (dir in 1:4) {
-    dir_x <- dir %% 2 + spin_dim[1]
-    dir_y <- dir %/% 2 + spin_dim[2]
-    for (x in spin_dim[1]) {
-      for (y in spin_dim[2]) {
-        
-        x_idx <- ( (x + dir_x - 1) %% spin_dim[1] ) + 1;
-        y_idx <- ( (y + dir_y - 1) %% spin_dim[2] ) + 1;
+  
+  for (x in 1:spin_dim[1]) {
+    for (y in 1:spin_dim[2]) {
+      
+      for (dir in 0:3) {
+        a <- get_coordinates(x,y,dir,spin_dim)
+        b <- get_coordinates(x,y,(dir + 1) %% 4,spin_dim)
         
         dotted <- crossprod(
-          spin_array[x,y,1:2],spin_array[x_idx,y_idx,1:2])
+          spin_array[a[1],a[2],1:2],spin_array[b[1],b[2],1:2])
+        dotted <- pmax(-1, pmin(1, dotted))
         crossed <- crossvec(
-          spin_array[x,y,1:2],spin_array[x_idx,y_idx,1:2])
-        angles[dir,x,y] <- acos(dotted) * sign(crossed)
+          spin_array[a[1],a[2],1:2],spin_array[b[1],b[2],1:2])
+        angles[dir+1,x,y] <- acos(dotted) * sign(crossed)
       }
     }
   }
@@ -259,15 +232,10 @@ vorticity_calc <- function(spin_array) {
 ```
 
 ```{r}
-apply(spin_data[1:2,,,],1,vorticity_calc)
-```
-
-```{python}
-#Calculate and print various statistics related to the distribution
-vorticity = np.mean([vorticity_calc(x) for x in
-        r.spin_data[:int(r.vorticity_samples)]])
-vortex_density = vorticity / float(r.dim_x * r.dim_y)
-print("Energy:",r.energy,"Specific heat:",r.specific_heat,"Vortex Density:",vortex_density)
+vorticity <- mean(apply(spin_data[1:vorticity_samples,,,],1,vorticity_calc))
+vortex_density <- vorticity / dim_x / dim_y
+sprintf("Energy: %f Specific Heat: %f Vortex Density: %f",
+        energy,specific_heat,vortex_density)
 ```
 
 \subsection{KT Phase Transition}
