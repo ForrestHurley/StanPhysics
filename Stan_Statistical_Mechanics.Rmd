@@ -49,7 +49,7 @@ This section is a short introduction to statistical mechanics summarizing [sourc
 
 The first core assumption of statistical mechanics is that the system of interest exists in one of a discrete set of microstates. The number of microstates can be countably infinite. In fact, the number of microstates is often assumed to be dense enough to be arbitrarily close to any given state. A collection of microstates, often with some defining property, is a macrostate. For example, the collection of microstates with energy 2 is a macrostate. Let Omega(E) be the size of the macrostate (also called the density of states) with energy E.
 
-![\label{fig:particle}Label text](Images/particle.png){width=3.25in}
+![\label{fig:particle}A free particle with location ($\vec{X}$) and momentum ($\vec{P}$).](Images/particle.png){width=3.25in}
 
 In an example system consisting of a single particle on a plane, there are 4 coordinates: 2 positional coordinates and 2 momentum coordinates. The position does not affect energy, which is given by E=|p|^2/2m. Every microstate with energy E must have |p| prop E^0.5; the momentum coordinates must lie in a circle. The size of the macrostate is proportional to the radius of the circle or omega prop E^0.5. In higher dimensional space, either corresponding to having more spatial dimensions or to having more particles, this proportionality takes the form omega prop E^(D-1)/2. Due to the exponential nature of this inequality, the logarithm of the density of states is often used. 
 
@@ -59,7 +59,7 @@ Much of the complexity and usefulness of statistical mechanics appears when syst
 
 Stan uses prior probabilities and likelihood functions in its simulation of the posterior. Our uninformative prior is the uniform distribution. We must still specify a likelihood function which captures the physical model we wish to sample. In a canonical ensemble the log probability of any state is $-\beta E + c$ where $E$ is the energy of the state and $c$ is an arbitrary constant. We define the likelihood as $p(\beta | E) \sim e^{-\beta E}$ and sample states with various $E$.
 
-![\label{fig:heat_bath}Another label](Images/heat_bath.png){width=3.25in}
+![\label{fig:heat_bath}A system in a much larger heat bath. They can freely exchange energy.](Images/heat_bath.png){width=3.25in}
 
 In a one dimensional single particle space, E = p^2/2m. By substituting into the previous equation we get prob(p) prop E ^ -beta * p^2/2m. It is simply an unnormalized normal distribution with mean 0 and variance ___. Generally speaking, energy divided by temperature is the negative log likelihood to within a constant. Later we describe how we utilized this correspondence to sample from a statistical mechanical model from within the Bayesian sampling oriented framework of Stan.
 
@@ -99,24 +99,24 @@ functions {
 
 \section{Physical Model}
 
-![\label{fig:1d_ising}Label and other text](Images/ising_1d.png){width=3.25in}
+![\label{fig:1d_ising}A one dimensional Ising Model. Boundaries between up and down spins increase the amount of potential energy.](Images/ising_1d.png){width=3.25in}
 
 
 One particularly simple statistical mechanical model with profound implications on reality is the Ising Model. It consists of an N-dimensional lattice of elements which either have spin up or spin down. The total energy of the system is the sum of interactions between neighboring elements. summation -Si Sj. If the spins are in the same direction then the energy is lower. In 2 dimensions the Ising Model has two distinct phases. In the ordered phase almost all of the spins are in the same direction and the average spin is not near zero. At higher temperatures, in the unordered phase, the spins are random, and the average spin is almost exactly zero. The transition between the two phases happens suddenly as temperature increases.
 
-![\label{fig:is_cylinder}Label](Images/ising_cylinder.png){width=3.25in}
+![\label{fig:is_cylinder}A single dimensional Ising Model on a cylinder. Two dimensional models are usually placed on a torus (donut).](Images/ising_cylinder.png){width=3.25in}
 
 
 
 There are a variety of interesting and efficient ways of sampling from the distribution of states of the Ising Model, however due to it only being defined by discrete variables Stan is not one of them [@stan]. While small numbers of discrete parameters can be marginalized out manually, this procedure is complex for the large number of parameters in which we are interested. For this work we instead focus on the XY Model. In the XY model the spins are not up or down. Instead the spins are unit vectors in the XY plane. The energy due to the interaction of spins between two neighbors is -Si dot Sj. While the XY model does not have a phase transition of the same sort as the Ising model, it does have similar behaviours in more complex variables. The spins orient into larger scale cyclic structures called vortices. At higher temperatures there is suddenly a drastic increase in the density of vortices.
 
-![Label](Images/ising_transition.png){width=3.25in}
+![As temperature increases beyond a critical threshold, the magnetization of the (2D) Ising Model drops to 0 in a second order phase transition.](Images/ising_transition.png){width=3.25in}
 
 The XY Model is similar to the Ising Model, but with an extra degree of freedom for the spins. The energy of any given state is related to the dot products of the spins of nearest neighbors on the lattice. $$E=-J\sum_{<i,j>}\hat{\sigma}_i\cdot\hat{\sigma}_j$$ Each spin is a unit vector in the XY plane rather than the binary up or down seen in the Ising Model. Unsurprisingly, this change leads to a drastic shift in the dynamics. The Ising Model has a second order phase transition with changing temperature. It also has a first order phase transition with changing external magnetic field. However, the XY Model on a 2 dimensional lattice has no first or second order phase transitions. It does however exhibit a  Kosterlitz-Thouless transition. The KT transition relates to the appearance of vortices on the lattice [@Tobochnik1979]. A vortex is a swirling pattern centered on a lattice tile. At the critical temperature $T_{KT}$ vortex pairs unbind and move apart. Previous work has shown that for the XY Model on a 2D lattice, $T_{TK}\approx 0.893$ [@Jensen]. When we refer to the XY Model in the rest of this work, we will mean the 2D case.
 
 We implement the spins as 2d vectors constrained to have unit length [@stan_user]. Essentially, our sampling parameters are a multidimensional array of unit vectors. Every iteration we calculate the energy based on nearest neighbor interactions between those spins and set the log likelihood accordingly.
 
-![Label](Images/xy_grid.png){width=3.25in}
+![A full 2D grid of spins in the 2D plane representing a realization of the XY Model](Images/xy_grid.png){width=3.25in}
 
 \subsection{Vorticity}
 
