@@ -204,7 +204,7 @@ model = stan_model('xy_model.stan')
 
 We store the dimension of the lattice and the temperature in the input data and then sample the distribution.
 
-```{r,cache=TRUE}
+```{r,cache=TRUE,results="hide",message=FALSE,warning=FALSE}
 #basic parameters
 chains <- 4
 vorticity_samples <- 1000
@@ -221,7 +221,8 @@ fit <- sampling(model,
       data=data,chains=chains,
       iter=iterations,
       verbose=FALSE,
-      control = list(max_treedepth=15))
+      control = list(max_treedepth=15,adapt_delta=0.85)
+)
 ```
 
 After sampling from the canonical distribution at a specific temperature, we calculate a few statistics. 
