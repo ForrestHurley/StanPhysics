@@ -47,13 +47,15 @@ Take the system consisting of a single free particle on a plane, there are 4 coo
 
 ## Canonical Distribution
 
-Much of the complexity and insightfulness of statistical mechanics appear when systems are not entirely isolated. However, a completely open system would unfortunately have a huge number of parameters and vast variability. To allow analysis of a system which is nearly open, take a large isolated system and break it into two interacting subsystems. If one of these subsystems is much smaller than the other, it can be treated as an open system in a larger environment. The canonical ensemble describes such a partitioning between a system of interest and a much larger heat bath. The only interactions are random exchanges of energy. While the energy of the system as a whole remains constant, the system of interest has constant fluctuations. There are other ensembles which allow particles or volume to transfer between the partitions, but even the canonical ensemble provides fascinating dynamics.
+Much of the complexity and insightfulness of statistical mechanics appear when systems are not entirely isolated. However, a completely open system would unfortunately have a huge number of parameters and vast variability. To allow analysis of a system which is nearly open, take a large isolated system and break it into two interacting subsystems. If one of these subsystems is much smaller than the other, it can be treated as an open system in a larger environment. The canonical ensemble describes such a partitioning between a system of interest and a much larger heat bath. The only interactions between the subsystems are modeled as random exchanges of energy. While the energy of the system as a whole remains constant, the system of interest has constant fluctuations. There are other ensembles which allow particles or volume to transfer between the partitions, but even the canonical ensemble provides fascinating dynamics.
 
-![\label{fig:heat_bath}A system in a much larger heat bath. They can freely exchange energy.](Images/heat_bath.png){width=3.25in}
+![\label{fig:heat_bath}A system in a much larger heat bath. Energy exchanges occur without restrictions](Images/heat_bath.png){width=3.25in}
 
-For reasons which can be well justified, but are outside the scope of this paper, we approximate the density of states of the heat bath as $\log( \Omega_{bath}) = \alpha + \beta E_{bath}$. If the density of states of the heat bath is independent of the system of interest then $\Omega_{system}(E_a)=\Omega_{bath}(E_{bath})$. While the densities are usually not truly independent, it is almost always a close approximation. Combining these various assumptions together, we find $p(E_{system}) \propto \Omega_A (E_{system}) \propto e^{-\beta E_{system}}$. $\beta$ is $\frac{1}{kT}$ where T is temperature and k is the Boltzmann constant. For our purposes, we will use units where $k=1$, so $\beta=\frac{1}{T}$. As an example of the correspondance between physical models and statistical ones, consider the canonical ensemble describing a one dimensional space with a single free particle. As previously mentioned $E = \frac{p^2}{2m}$. By substitution we get $P(p) \propto e ^ {-\beta \frac{p^2}{2m}}$. It is simply a normal distribution with mean 0 and variance $m/\beta=mT$.
+For reasons which can be well justified -- we will not justify them for the sake of simplicity and conciseness -- we approximate the density of states of the heat bath as $\log( \Omega_{bath}) = \alpha + \beta E_{bath}$. If the density of states of the heat bath is independent of the system of interest then $\Omega_{system}(E_{system})=\Omega_{bath}(E_{bath})$. Independence means that $\Omega_{system}\Omega_{bath}=\Omega_{total}$; there are no additional states possible due to interactions between the system and heat bath. Combining these various assumptions together, we find $p(E_{system}) \propto \Omega_A (E_{system}) \propto e^{-\beta E_{system}}$. $\beta$ is $\frac{1}{kT}$ where T is temperature and k is the Boltzmann constant. For our purposes, we will use units where $k=1$, so $\beta=\frac{1}{T}$. This choice of units means that temperature does not correspond directly to any familiar scale; fortunately, the units of temperature are not relevant for the vast majority of the analysis.
 
-We wish to use Stan to sample from the canonical ensemble using unnormalized probabilities at a specific temperature ($T=\frac1\beta$). Our uninformative prior is the uniform distribution. In a canonical ensemble the log probability of any state is proportional to $-\beta E$ where $E$ is the energy of the state. We define the likelihood as $p(\beta | E) \sim e^{-\beta E}$; at a fixed temperature we sample states with various energies. The following code calculates this likelihood function.
+As an application, consider the canonical ensemble describing a one dimensional space with a single free particle. As previously mentioned $E = \frac{p^2}{2m}$. By substitution we get $P(p) \propto e ^ {-\beta \frac{p^2}{2m}}$. It is simply a normal distribution with mean 0 and variance $m/\beta=mT$. While the momentum of a free particle in an isolated system is obviously not described by a normal distribution, when energy can be randomly added or removed it will eventually approach normality.
+
+We use Stan to sample from canonical ensembles using unnormalized probabilities at specific temperatures ($T=\frac1\beta$). Our uninformative prior is the uniform distribution. In a canonical ensemble the log probability of any state is equal within a constant to $-\beta E$ where $E$ is the energy of the state. We define the likelihood as $p(\beta | E) \sim e^{-\beta E}$; at a fixed temperature we sample states with various energies. The following code calculates this likelihood function.
 
 ```{stan output.var="temp",eval=FALSE}
 //given the temperature and energy, calculate the likelihood
@@ -66,23 +68,25 @@ real canonical_ensemble_lpdf(real temperature, real energy) {
 
 ![\label{fig:1d_ising}A one dimensional Ising Model. Boundaries between up and down spins increase the amount of potential energy.](Images/ising_1d.png){width=3.25in}
 
-One particularly simple statistical mechanical model is the Ising Model. It consists of an N-dimensional lattice of elements which either have spin up or spin down. These elements could be thought of as atoms in a metal; if they are generally aligned there is a net magnetic field. The total energy of the system is the sum of interactions between neighboring elements where $S_i,S_j\in\{-1,1\}$.
+One particularly simple statistical mechanical model is the Ising Model. It consists of an K-dimensional lattice of elements which either have spin up or spin down. These elements could be thought of as atoms in a metal; if they are generally aligned there is a net magnetic field. The total energy of the system is the sum of interactions between neighboring elements where $S_i,S_j\in\{-1,1\}$.
 $$E=- J\sum_{<i,j>} S_i S_j$$
-$J$ is a scalar describing the strength of the interactions and the sum is only over the neighboring spins. If the spins are in the same direction (have the same sign) then the energy is lower. Rather than defining rather arbitrary rules to describe the boundaries of the lattice, it is generally wrapped around such that no boundaries exist. This approach to handling the edges is called a periodic boundary condition. The below image shows such a boundary for a 1 dimensional Ising Model. 
+$J$ is a scalar describing the strength of the interactions and the sum is only over the neighboring spins. If the spins are in the same direction (have the same sign) then the energy is lower. Rather than defining rather arbitrary rules to describe the boundaries of the lattice, it is wrapped around such that no boundaries exist. This approach to handling the edges is called a periodic boundary condition. The figure below shows such the result for a 1 dimensional Ising Model. 
 
-![\label{fig:is_cylinder}A single dimensional Ising Model on a cylinder. Two dimensional models are usually placed on a torus (donut).](Images/ising_cylinder.png){width=3.25in}
+![\label{fig:is_cylinder}A single dimensional Ising Model with periodic boundary conditions. Two dimensional models are usually placed on a torus (donut).](Images/ising_cylinder.png){width=3.25in}
 
-The behaviour of the model and difficulty of analysis is very dependent on the number of dimensions of the lattice. In 2 dimensions the Ising Model has two distinct phases. In the ordered phase almost all of the spins are in the same direction. At higher temperatures, in the unordered phase, the spins are random, and the average spin (magnetization) is almost exactly zero. The transition between the two phases occurs suddenly as temperature increases. In fact, the transition happens so suddenly that the derivative of magnetization with respect to temperature has a jump discontinuity. The derivative of the energy with respect to temperature has a similar jump; this is known as a second order phase transition [@Cross2008]. A first order phase transition would have the jump in energy and magnetization rather than their derivatives.
+The Ising Model behaves differently in different numbers of dimensions. When the dimensionality is high, it behaves like a mean field model. In 1 dimension it can be solved analytically without too much difficulty. The 2 dimensional case is far harder to analyze and also has deeper dynamics. In 2 dimensions the Ising Model has two distinct phases. In the ordered phase at low temperatures almost all of the spins are in the same direction. In the unordered phase at higher temperatures the spins are uncorrelated, and the average spin (magnetization) is almost exactly zero. The transition between the two phases occurs suddenly as temperature increases. In fact, the transition happens so suddenly that the derivative of magnetization with respect to temperature has a jump discontinuity. The derivative of the energy with respect to temperature has a similar jump; this feature is a second order phase transition [@Cross2008]. A first order phase transition would have the jump in energy and magnetization rather than in their derivatives.
 
 ![As temperature increases beyond a critical threshold, the magnetization of the (2D) Ising Model drops to 0 in a second order phase transition.](Images/ising_transition.png){width=3.25in}
 
-There are a variety of interesting and efficient ways of sampling from the distribution of states of the Ising Model. Because the model is only defined by discrete variables Stan is not one of them [@stan]. While small numbers of discrete parameters can be marginalized out manually, this procedure is complex for the large number of parameters in which we are interested. Due to this limitation we instead focus on the XY Model.
+Due to the complexity of analyzing it, one of the simplest ways to garner information about the 2 dimensional Ising Model is by sampling from its probability distribution of microstates at various temperatures. There are a variety of interesting and efficient ways of sampling from this distribution. Because the model is only defined by discrete variables, Stan is unfortunately not one of them [@stan]. While small numbers of discrete parameters can be marginalized out manually, this procedure is complex for the large number of parameters in which we are interested. Due to this limitation we instead focus on the XY Model.
 
-The XY Model is similar to the Ising Model, but with an extra degree of freedom for the spins. The energy of any given state is related to the dot products of the spins of nearest neighbors on the lattice. $$E=-J\sum_{<i,j>}\hat{\sigma}_i\cdot\hat{\sigma}_j$$ Each spin is a unit vector in the XY plane rather than a binary up or down. If these vectors are further constrained to be on the X axis then it is fairly easy to see that the energy equation describes the Ising Model.
+The XY Model is similar to the Ising Model, but with an extra degree of freedom for the spins. The energy of any given state is related to the dot products of the spins of nearest neighbors on the lattice. Two nodes on the lattice are nearest neighbors if and only if their coordinates differ by no more than 1 in a single dimension. The nodes (1,3) and (2,3) are nearest neighbors, while (1,3) and (2,4) are not.
+$$E=-J\sum_{<i,j>}\hat{\sigma}_i\cdot\hat{\sigma}_j$$ 
+Each spin is a unit vector in the XY plane rather than simply a binary up or down. If these vectors are further constrained to be on the X axis while maintaining unit length then it is fairly easy to see that the energy equation simplifies to the Ising Model.
 
 ![A 2D grid of spins in the 2D plane taken from a simulation of the XY Model](Images/xy_grid.png){width=3.25in}
 
-The Ising Model has a second order phase transition with changing temperature. It also has a first order phase transition as an external magnetic field is applied. However, the XY Model on a 2 dimensional lattice has no first or second order phase transitions. It does however exhibit a  Kosterlitz-Thouless transition. The KT transition relates to the appearance of vortices on the lattice [@Tobochnik1979]. A vortex is a swirling pattern centered on a lattice tile. At the critical temperature $T_{KT}$ vortex pairs unbind and move apart. Previous work has shown that for the XY Model on a 2D lattice, $T_{TK}\approx 0.893$ [@Jensen]. In the remainder of this document we work exclusively with the 2D XY Model. The reader is reminded that the spins being on the XY plane is separate from the dimensionality of the lattice.
+The Ising Model has a second order phase transition with changing temperature. It also has a first order phase transition as an external magnetic field is applied. However, the XY Model on a 2 dimensional lattice has no first or second order phase transitions. Instead it has a  Kosterlitz-Thouless transition. The Kosterlizt-Thouless(KT) transition relates to the appearance of vortices, swirling patterns on the lattice [@Kosterlitz1973]. At the critical temperature $T_{KT}$ vortex pairs unbind and move apart. The number of measurable vortices increases drastically. Previous work has shown that for the XY Model on a 2D lattice, $T_{TK}\approx 0.893$ [@Jensen]. Our results presented later closely match this value. In the remainder of this document we work exclusively with the 2D XY Model. The reader is reminded that the dimensionality of the spin vectors is separate from the dimensionality of the lattice.
 
 ```{stan output.var="temp",eval=FALSE}
 real xy_energy(vector[,] spins) {
@@ -109,13 +113,13 @@ real xy_energy(vector[,] spins) {
 }
 ```
 
-We implement the spins as 2d vectors constrained to have unit length [@stan_user]. Essentially, our sampling parameters are a multidimensional array of unit vectors. Every iteration we calculate the energy based on nearest neighbor interactions between those spins and set the log likelihood accordingly. The preceding code iterates over every pair of nearest neighbors on the lattice and sums their dot products. It assumes that $J=1$ for simplicity.
+We implement the spins as 2D vectors constrained to have unit length [@stan_user]. Our sampling parameters are a multidimensional array of unit vectors. Every iteration we calculate the energy based on nearest neighbor interactions between those spins and set the log likelihood accordingly. The preceding code iterates over every pair of nearest neighbors on the lattice and sums their dot products. It assumes that $J=1$ for simplicity.
 
 ## Vorticity
 
 ![\label{fig:vort_example}An example configuration of spins on a lattice square. Because the shortest angles between each spin sum to $-2\pi$, it is an anti-vortex.](Images/vorticity_example.png){width=3in}
 
-The KT transition arises from an appearance of large vortices. We identify vortices by looking for lattice cells where the corner spin vectors tend to point clockwise or counterclockwise. Specifically we calculate the shortest difference in angles in the counterclockwise direction and sum. In the figure above, the angle between vectors A and B would be -45 degrees. This sum can either be $2\pi$, $0$, or $-2\pi$ (technically it can also be $4\pi$ and $-4\pi$ but those cases are exceedingly unlikely). On a lattice with periodic boundary conditions, there must be the same number of vortices ($2\pi$) and anti-vortices ($-2\pi$)[@Imriska2009]. As we are only examining periodic lattices, the anti-vortices are not counted or included in any summaries. 
+The KT transition arises from the unpairing of many vortices. Equivalently, paired clockwise and counter-clockwise vortices appear and move apart. We identify vortices by looking for lattice cells where the corner spin vectors tend to point clockwise or counterclockwise. Specifically we calculate the shortest difference in angles in the counterclockwise direction and sum. In the figure above, the angle between vectors A and B would be -45 degrees. This sum can either be $2\pi$, $0$, or $-2\pi$ (technically it can also be $4\pi$ and $-4\pi$ but those cases are exceedingly unlikely). On a lattice with periodic boundary conditions, there must be the same number of counter-clockwise vortices ($2\pi$) and clockwise vortices ($-2\pi$)[@Imriska2009]. As we are only examining periodic lattices, we ignore the clockwise vortices to simplify the code.
 
 ```{r}
 crossvec <- function(x,y){
@@ -142,7 +146,11 @@ find_angle <- function(spin_array,a, b)
     spin_array[a[1],a[2],1:2],spin_array[b[1],b[2],1:2])
   return(acos(dotted) * sign(crossed))
 }
+```
 
+We define several helper functions for counting the number of counter-clockwise vortices on a spin lattice. \textit{get_coordinates} handles moving around lattice squares even at the periodic boundaries. \textit{find_angle} calculates the counter-clockwise angle between the vectors at coordinates \textit{a} and \textit{b}.
+
+```{r}
 vorticity_calc <- function(spin_array) {
   spin_dim = dim(spin_array)[1:2]
   angles = array(0,c(4,spin_dim))
@@ -165,17 +173,17 @@ vorticity_calc <- function(spin_array) {
 }
 ```
 
-The above code counts vortices by counting the number of lattice squares which have a total rotation of spin vectors greater than 0. Most of the complexity comes from properly calculating the relative angles of vectors and iterating around the edges of the squares.
+We iterate over every lattice square and iterate around each square's edges to calculate the total angles. The number of counter-clockwise vortices is the number of total angles greater than 0. We test for total angles greater than 1 to handle numerical imprecision issues.
 
 # Parameters and Iterations
 
-For most experiments we ran 5000 NUTS iterations each on 4 parallel chains with a goal rejection rate of 0.7 and a maximum tree depth of 15. We calculated the density of vortices on 100 random samples from the simulated chains of spin configurations at each temperature. The effective sample sizes were always at least a tenth of the number of iterations except on two of the tests around a temperature of 1 on the 24x24 and 32x32 experiments with $j=-1$. The aforementioned 24x24 experiment was run with 1000 NUTS iterations. The simulations were originally run and analyzed using Python3 and PyStan, though all code has been ported to R and RStan. The calculations were performed on an Intel Core i7 8th generation processor and the total computation time was on the order of 5 days.
+For most experiments we ran 5000 sampler iterations at each temperature each on 4 parallel chains with a goal rejection rate of 0.7 and a maximum tree depth of 15. We calculated the density of vortices on 100 random samples from the simulated chains of spin configurations. In the vast majority of cases the effective sample sizes of the chains were at least 500. There were a few exceptions for the 24x24 and 32x32 lattices at experiments at temperatures near 0.9.  The simulations were originally run and analyzed using Python3 and PyStan, though all code has been ported to R and RStan. The calculations were performed in an Ubuntu 18.10 VM on an Intel Core i7 8th generation processor. The total computation time to generate the data in the following graphs was approximately 5 days.
 
-We ran experiments on 4x4, 8x8, 16x16, 24x24, and 32x32 lattices. In plots N refers to the side length of the lattice; the lattices were NxN squares. Energy refers to the average energy per lattice site rather than total energy.
+We ran experiments on 4x4, 8x8, 16x16, 24x24, and 32x32 lattices. In plot labels N refers to the side length of the lattice, rather than the total number of elements. Energy refers to the average energy per lattice site rather than total energy.
 
-# Model Example
+# Example Model
 
-The data for the model holds the temperature and the size of the lattice. The sampling parameters are the spins on that lattice.
+The data for the model holds the temperature and x and y dimensions of the lattice. The sampling parameters are the spins on a lattice of that size.
 
 ```{stan output.var="temp",eval=FALSE}
 data {
@@ -188,12 +196,12 @@ parameters {
 }
 ```
 
-The energy is calculated as a transformed parameter using the xy_energy function. It is then normalized by the number of elements to allow easier comparison of different lattices. We are sampling from a distribution representing a canonical ensemble at a specific temperature.
+The energy is calculated as a transformed parameter using the xy_energy function. It is then normalized by the number of elements (N*N) to allow easier comparison of different lattices. We use the function defined earlier to sample from a canonical distribution at a specific temperature.
 
 ```{stan output.var="temp",eval=FALSE}
 transformed parameters{
   real energy = xy_energy(spin);
-  real energy_per_spin = energy / dim_x / dim_y;
+  real energy_per_spin = energy / (dim_x * dim_y);
 }
 model {
   temp ~ canonical_ensemble(energy);
@@ -207,10 +215,12 @@ model = stan_model('xy_model.stan')
 We store the dimension of the lattice and the temperature in the input data and then sample the distribution.
 
 ```{r,cache=TRUE,results="hide",message=FALSE,warning=FALSE}
-#basic parameters
+#sampling parameters
 chains <- 4
 vorticity_samples <- 1000
 iterations <- 10000
+
+#data parameters
 dim_x <- 4
 dim_y <- 4
 temp <- 2.
@@ -230,11 +240,14 @@ fit <- sampling(model,
 After sampling from the canonical distribution at a specific temperature, we calculate a few statistics. 
 
 ```{r}
-print(summary(fit,pars="energy_per_spin")$summary)
+specific_heat = var(extract(fit,pars='energy')$energy) / (dim_x * dim_y) / (temp * temp)
+```
 
+The specific heat is the amount of energy which must be added to the system to raise the temperature by 1 degree. To cast it in terms of variance, consider that the higher the specific heat, the more energy is released by a small change in temperature. It appears reasonable that the random fluctuations in energy would then be larger at any given temperature.
+
+```{r}
 energy = mean(extract(fit,pars='energy_per_spin')$energy_per_spin)
 energy_var = var(extract(fit,pars='energy_per_spin')$energy_per_spin)
-specific_heat = var(extract(fit,pars='energy')$energy) / dim_x / dim_y / temp / temp
 
 spin_data <- extract(fit,pars="spin")$spin
 
@@ -242,9 +255,10 @@ vorticity <- mean(apply(spin_data[1:vorticity_samples,,,],1,vorticity_calc))
 vortex_density <- vorticity / dim_x / dim_y
 sprintf("Energy: %f Specific Heat: %f Vortex Density: %f",
         energy,specific_heat,vortex_density)
+print(summary(fit,pars="energy_per_spin")$summary)
 ```
 
-The specific heat is the amount of energy which must be added to the system to raise the temperature by 1 degree. The units of temperature are not actually a familiar scale to allow the Boltzmann constant $k$ to be 0; the specific units of temperature are not relevant for the vast majority of the analysis.
+At a temperature of 2, which is above the critical temperature $T_{KT}$ of the KT transition, we found a vortex density of around 0.085. Despite the complexity of the sampling distribution, the resulting chain has a non-negligible effective sample size.
 
 # Results
 
@@ -252,29 +266,29 @@ The specific heat is the amount of energy which must be added to the system to r
 
 ![\label{fig:energy}Mean energy of a canonical ensemble of states of the XY Model at several temperatures](Images/plot_pos_energ.png){width=3.25in}
 
-Recall that the KT transition refers to the spontaneous appearance of vortices as the temperature of the system increases. Like any phase transition, additional energy is required to change the properties of the system. The increased slope in the above figure corresponds the increased energy requirements. An additional feature is that once the lattice size reaches 8x8, the temperature-energy curve appears to have converged.
+Recall that the KT transition refers to the spontaneous unpairing or appearance of vortices as the temperature of the system increases. All phase transitions require some additional energy to change the properties of the system. Water remains at its boiling point while heated because the additional energy is consumed by the phase transition between liquid and gas. The increased slope in the above figure corresponds the increased energy requirements. Another important detail is that once the lattice size reaches 8x8, the temperature-energy curve appears to have converged. Larger lattices behave very similarly to the 8x8 lattice.
+
+![\label{fig:vort}The density of vortices in the XY Model at various temperatures. Below 0.8 the density is almost exactly 0.](Images/plot_pos_vort.png){width=3in}
+
+The vortex density of the XY model behaves similarly in some ways to the magnetism of the Ising model. Both have a region where they are almost exactly 0 followed by a jump towards larger values. However, unlike the Ising model, this transition in the XY model is smooth. At all system sizes we tested there is a soft shift between regions rather than a corner or a discontinuity. This characteristic makes it more difficult to identify an exact critical temperature $T_{TK}$, though it is around 0.9.
 
 ![\label{fig:heat}The specific heat of the XY models across temperatures and lattice sizes. The 24x24 lattice only has data points up to a temperature of 1.5.](Images/plot_pos_heat.png){width=3in}
 
-Looking at the specific heat plot can make phase transition behaviours more obvious. The specific heat starts around $c=0.5$ at a temperature of 0. The peak specific heat occurs around a temperature of 1.1. At first and second order phase transitions the specific heat of the system approaches infinite as the system size grows. The XY model (and the KT transition) is a bit more finite and even the largest system sizes we tested converged.
-
-![\label{fig:vort}The density of vortices at various temperatures. Below 0.8 it is almost exactly 0.](Images/plot_pos_vort.png){width=3in}
-
-The vortex density of the XY model exhibits some similar characteristics to the magnetism of the Ising model. Both have a region where they are almost exactly 0 followed by a jump towards larger values. Unlike the Ising model, this transition in the XY model is smooth. At all system sizes we tested there is a soft shift between regions rather than a corner or a discontinuity.
+Looking at the specific heat plot can make phase transitions more obvious. At first and second order phase transitions the specific heat of the system approaches infinite as the system size grows. The XY model (and the KT transition) is a bit more finite and even the largest system sizes we tested converged. Unlike first or second order phase transitions and due to the smoothness of the KT transition, the peak specific heat does not occur at the beginning of the transition. Instead it occurs around a temperature of 1.1; the transition starts slightly below 0.9.
 
 ![\label{fig:energy_vort}The relationship between energy per spin and vortices per spin for several lattice sizes.](Images/plot_pos_en_vort.png){width=3.25in}
 
-After some cutoff, increasing the amount of energy leads to an almost linear increase in the number of vortices. Above energy densities of -1.5 per lattice point, 1 unit of energy density increase is equivalent to a vortex density increase of slightly over 0.1. Equivalently, adding a single vortex to the overal system requires slightly less than 10 units of energy.
+Increasing the amount of energy eventually leads to an almost linear increase in the number of unpaired vortices. Above energy densities of -1.5 per lattice point, 1 unit of energy density increase is equivalent to a vortex density increase of slightly over 0.1. Equivalently, adding a single vortex to the overal system requires slightly less than 10 units of energy.
 
 ## Reversed Interactions (J=-1)
 
 ![\label{fig:diff}The difference in mean energy between chains generated with J=1 and J=-1 at several temperatures and lattice sizes.](Images/plot_nega_diff.png){width=3.25in}
 
-Many of our early experiments were run with $J=-1$. This may not have been intentional. However, we found that the energy curves of the XY Model with $J=1$ are identical to those with $J=-1$. The figure above shows the difference between the mean energy for chains on the same lattice at the same temperature for the two different values of $J$. As temperature increases the differences also increase, but the mean difference remains close to zero for all lattice sizes. Note that the scale in the above image is on the order of 0.01 energy units while the overall energy of the system is on the order of 1 units. It turns out that flipping half of the spins in a checker pattern by 180 degrees transforms directly between low energy states for $J=\{-1,1\}$.
+Many of our early experiments were run with $J=-1$. This may not have been intentional. Setting $J=-1$ corresponds to flipping the lowest energy configurations between nearest neighbors by 180 degrees. Instead of having a low energy state when they are facing in the same direction, it occurs when they are facing in opposite directions. Despite the vast apparent differences in the models, we found that the energy curves of the XY Model with $J=1$ are identical to those with $J=-1$. The figure above shows the difference between the mean energy for chains on the same lattice at the same temperature for the two different values of $J$. As temperature increases the differences also increase, but the mean difference remains close to zero for all lattice sizes. Note that the scale in the above image is on the order of 0.01 energy units while the overall energy of the system is up to 200 times larger. The two cases can be proven theoretically to be equivalent in terms of their possible energies; there is a simple one-to-one mapping between a $J=1$ state at a given energy and a $J=-1$ state with the same energy.
 
 # Conclusions
 
-The XY Model has a wealth of interesting dynamics. The energy of the system after the KT transition is directly proportional to the number of vortices. An interaction strength (J) of -1 rather than 1 does not have a significantly different energy at any temperature. The lowest energy states with $J=-1$ are the highest energy states of $J=1$; there is a strong symmetry between the two extremes of energy. Stan's built in diagnostics helped to validate the resulting chains and gauge the accuracy of their estimates. While its lack of support for discrete parameters limits the models for which it is useful, there are still many contexts in which it is a viable option for simulating physical models.
+The XY Model has a wealth of interesting dynamics. The energy of the system after the KT transition is directly proportional to the number of vortices. An interaction strength (J) of -1 rather than 1 does not have a significantly different energy at any temperature. Stan's built in diagnostics help to validate the simulated chains and gauge the accuracy of their estimates. While its lack of support for discrete parameters limits the models for which it is useful, there are still many contexts in which it is a viable option for simulating physical models.
 
 \newpage
 # References
