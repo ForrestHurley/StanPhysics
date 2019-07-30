@@ -294,7 +294,7 @@ Many of our early experiments were run with $J=-1$. This may not have been inten
 
 # Conclusions
 
-The XY Model has a wealth of interesting dynamics. The energy of the system after the KT transition is directly proportional to the number of vortices. The ensembles at any lattice size with an interaction strength (J) of -1 rather than 1 do not have a different mean energy at any temperature. Stan's built in diagnostics help to validate the simulated chains and gauge the accuracy of their estimates. While its lack of support for discrete parameters limits the models for which it is useful, there are still many contexts in which Stan is a viable option for simulating physical models.
+The XY Model has a wealth of interesting dynamics. The energy of the system after the KT transition is directly proportional to the number of vortices. The ensembles at any lattice size with an interaction strength (J) of -1 rather than 1 do not have a different mean energy at any temperature. Stan's built in diagnostics help to validate the simulated chains and gauge the accuracy of their estimates. While its lack of support for discrete parameters limits the models for which it is useful, there are still many contexts in which Stan is a viable option for simulating physical models. A future direction of research is to simulate other statistical mechanical models in Stan. Additionally, an awareness of developments in physics could lead to payoffs in more efficient samplers.
 
 \newpage
 # References
